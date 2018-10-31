@@ -3,57 +3,65 @@
 
 (defun su-toggle ()
   (interactive)
-
-  (let (filename (buffer-file-name))
-    (if (s-contains-p "/sudo:root@localhost:")
-	(su-demote)
-      (su-promote)
-      )
+  (if (su-toggle--current-buffer-is-su)
+      (su-toggle--demote)
+    (su-toggle--promote)
     )
   )
 
 
+(defun su-toggle--current-buffer-is-su ()
+  (s-contains-p "/sudo:root@localhost:" (buffer-file-name)))
 
-(defun su-promote ()
-  (interactive)
+
+(defun su-toggle--promote ()
   (let ((filename (buffer-file-name)) ;; get the current file name
 	(non-root-buffer (current-buffer))
 	(default-directory "/") ;; overwrite the default-directory otherwise naive string input to find-file won't work
 	)
-    (if (not filename)
-	(message "Can't open non-existent file with SU permissions.")
-      
-      (progn
-	(if (and (buffer-modified-p)
-		 (yes-or-no-p (format "Save %s before opening as root? " filename) ))
-	    (save-buffer))
-	(if (find-file (concat "/su:root@localhost:" filename))
+    (if (su-toggle--ready-for-toggle)
+	(if (find-file (concat "/sudo:root@localhost:" filename))
 	    (kill-buffer non-root-buffer))
-	)
       )
     )
   )
 
-(defun su-demote ()
-  (interactive)
-  (let ((filename (buffer-file-name)) ;; get the current file name
-	(root-buffer (current-buffer))
+(defun su-toggle--demote ()
+  (if (su-toggle--ready-for-toggle)
+      (let ((root-buffer (buffer-file-name))
+	    (non-root-file-name (s-replace "/sudo:root@localhost:" "" root-buffer)))
+	(if (find-file non-root-file-name)
+	    (kill-buffer root-buffer))
 	)
-    (if (not filename)
-	(message "Can't opened non-existent file without SU permissions.")
-      (progn
-	(if (and (buffer-modified-p)
-		 (yes-or-no-p (format "Save %s before opening as non-root? " filename) ))
-	    (save-buffer))
-	(let ((non-root-file-name (s-replace "/su:root@localhost:" "" filename)))
-	  (message non-root-file-name)
-	  (if (find-file non-root-file-name)
-	      (kill-buffer root-buffer))
-	  )
-	)
-      )
     )
   )
+
+(defun su-toggle--ready-for-toggle ()
+  (let ((filename (buffer-file-name))) ;; get the current file name  
+	(if filename
+	    (if (and (buffer-modified-p)
+		     (yes-or-no-p (format "Save %s before su-toggle? " filename)))
+		(progn 
+		  (save-buffer) t) t )
+	  (progn 
+	    (message "Can't su-toggle non-existent file.")
+	    nil
+	    )
+	  )
+	)
+  )
+
+
+
+
+
+
+
+
+
+
+
+
 
 (provide 'su-toggle)
 
