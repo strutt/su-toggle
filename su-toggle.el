@@ -1,10 +1,42 @@
-;;; su-toggle.el --- A simple set of functions to toggle between opening files with SU permissions in TRAMP.
+;;; su-toggle.el --- Emacs functions to toggle editing files with super-user permissions using tramp.
+
+;; Copyright (C) 2018 Ben Strutt
+
+;; Author:  Ben Strutt <ben@benstrutt.net>
+;; Version: 0.1
+;; Package-Requires: ((s "1.12.0") (tramp "2.3.3.26.1"))
+;; Keywords: tramp sudo su
+;; URL: http://github.com/strutt/su-toggle
+
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 ;;; Commentary:
+
+;; Emacs can open files as a super-user using tramp.
+;; This package provides functions to do that with fewer keystrokes.
+
+;;; Usage:
+;; M-x su-toggle
+
+
 
 ;;; Code:
 
-(require 'tramp) ;; I know this is built in, but if we don't have it su-toggle is useless.
-(require 's) ;; To manipulate file names.
+(require 'tramp)
+(require 's)
+
+
 
 (defcustom su-toggle-tramp-prefix "/sudo:root@localhost:"
   "The file prefix for su-toggle to insert for opening files as SU with tramp."
@@ -12,14 +44,13 @@
   :type 'string
   )
 
+
 (defun su-toggle ()
   "Switch to editing current buffer with super-user permissions."
   (interactive)
   (if (su-toggle--current-buffer-is-su)
       (su-toggle--demote)
-    (su-toggle--promote)
-    )
-  )
+    (su-toggle--promote)))
 
 
 (defun su-toggle--current-buffer-is-su ()
@@ -29,13 +60,13 @@
 
 (defun su-toggle--promoted-file-name (filename)
   "Add the su-toggle-tramp-prefix to FILENAME."
-  (concat su-toggle-tramp-prefix filename)
-  )
+  (concat su-toggle-tramp-prefix filename))
+
 
 (defun su-toggle--demoted-file-name (filename)
   "Remove the su-toggle-tramp-prefix from FILENAME."
-  (s-replace su-toggle-tramp-prefix "" filename)
-  )
+  (s-replace su-toggle-tramp-prefix "" filename))
+
 
 (defun su-toggle--promote ()
   "Open the file with SU permissions and close the buffer without those permissions."
@@ -49,6 +80,7 @@
     )
   )
 
+
 (defun su-toggle--demote ()
   "Open the file without SU permissions and close the buffer with those permissions."
   (if (su-toggle--ready-for-toggle)
@@ -57,19 +89,16 @@
 		       (kill-buffer promoted-buffer)
 	))))
 
+
 (defun su-toggle--ready-for-toggle ()
-  "Check whether the current buffer is saved as a file.  If so, prompt the user to save."
+  "Check whether the current buffer has a file.  If so, prompt the user to save."
   (if (buffer-file-name)
       (if (and (buffer-modified-p)
 	       (yes-or-no-p (format "Save %s before su-toggle? " (buffer-file-name))))
-	  (progn
-	    (save-buffer) t) t )
-    (progn
-      (message "Can't su-toggle non-existent file.")
-      nil
-      )
-    )
-  )
+	  (progn (save-buffer) t)
+	t)
+    (progn (message "Can't su-toggle non-existent file.") nil)
+    ))
 
 (provide 'su-toggle)
 ;;; su-toggle.el ends here
