@@ -41,8 +41,7 @@
 (defcustom su-toggle-tramp-prefix "/sudo:root@localhost:"
   "The file prefix for su-toggle to insert for opening files as SU with tramp."
   :group 'su-toggle
-  :type 'string
-  )
+  :type 'string)
 
 
 (defun su-toggle ()
@@ -54,7 +53,7 @@
 
 
 (defun su-toggle--current-buffer-is-su ()
-  "Check the current buffer file name to see if it has the su-toggle-tramp-prefix."
+  "Check the current buffer file name for su-toggle-tramp-prefix."
   (s-contains-p su-toggle-tramp-prefix (buffer-file-name)))
 
 
@@ -75,10 +74,7 @@
 	    (default-directory "/") ;; overwrite the default-directory otherwise naive string input to find-file won't work
 	    )
 	(if (find-file (su-toggle--promoted-file-name (buffer-file-name)))
-	    (kill-buffer demoted-buffer))
-	)
-    )
-  )
+	    (kill-buffer demoted-buffer)))))
 
 
 (defun su-toggle--demote ()
@@ -86,8 +82,7 @@
   (if (su-toggle--ready-for-toggle)
       (let ((promoted-buffer (current-buffer)))
 	(if (find-file (su-toggle--demoted-file-name (buffer-file-name)))
-		       (kill-buffer promoted-buffer)
-	))))
+		       (kill-buffer promoted-buffer)))))
 
 
 (defun su-toggle--ready-for-toggle ()
@@ -95,10 +90,8 @@
   (if (buffer-file-name)
       (if (and (buffer-modified-p)
 	       (yes-or-no-p (format "Save %s before su-toggle? " (buffer-file-name))))
-	  (progn (save-buffer) t)
-	t)
-    (progn (message "Can't su-toggle non-existent file.") nil)
-    ))
+	  (progn (save-buffer) t) t)
+    (progn (message "Can't su-toggle non-existent file.") nil)))
 
 (provide 'su-toggle)
 ;;; su-toggle.el ends here
